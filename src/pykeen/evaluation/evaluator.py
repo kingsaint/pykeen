@@ -567,64 +567,64 @@ def evaluate(
                         scores=filtered_scores_of_corrupted_tails_batch,
                     )
 
-            # # Predict head scores once
-            # scores_of_corrupted_heads_batch = model.predict_scores_all_heads(batch[:, 1:3], slice_size=slice_size)
-            # scores_of_true_heads_batch = scores_of_corrupted_heads_batch[
-            #     torch.arange(0, batch.shape[0]),
-            #     batch[:, 0],
-            # ]
-            #
-            # # Create positive filter for all corrupted heads
-            # if filtering_necessary or positive_masks_required:
-            #     assert all_pos_triples is not None
-            #     assert relation_filter is not None
-            #     positive_filter_heads, _ = create_sparse_positive_filter_(
-            #         hrt_batch=batch,
-            #         all_pos_triples=all_pos_triples,
-            #         relation_filter=relation_filter,
-            #         filter_col=0,
-            #     )
-            #
-            # # Create a positive mask with the size of the scores from the positive heads filter
-            # if positive_masks_required:
-            #     positive_mask_heads = create_dense_positive_mask_(
-            #         zero_tensor=torch.zeros_like(scores_of_corrupted_heads_batch),
-            #         filter_batch=positive_filter_heads,
-            #     )
-            # else:
-            #     positive_mask_heads = None
-            #
-            # # Evaluate metrics on these head scores
-            # for evaluator in unfiltered_evaluators:
-            #     evaluator.process_head_scores_(
-            #         hrt_batch=batch,
-            #         true_scores=scores_of_true_heads_batch[:, None],
-            #         scores=scores_of_corrupted_heads_batch,
-            #         dense_positive_mask=positive_mask_heads,
-            #     )
-            #
-            # # Filter
-            # if filtering_necessary:
-            #     assert all_pos_triples is not None
-            #     assert relation_filter is not None
-            #     filtered_scores_of_corrupted_heads_batch = filter_scores_(
-            #         scores=scores_of_corrupted_heads_batch,
-            #         filter_batch=positive_filter_heads
-            #     )
-            #
-            #     # The scores for the true triples have to be rewritten to the scores tensor
-            #     scores_of_corrupted_heads_batch[
-            #         torch.arange(0, batch.shape[0]),
-            #         batch[:, 0],
-            #     ] = scores_of_true_heads_batch
-            #
-            #     # Evaluate metrics on these *filtered* tail scores
-            #     for filtered_evaluator in filtered_evaluators:
-            #         filtered_evaluator.process_head_scores_(
-            #             hrt_batch=batch,
-            #             true_scores=scores_of_true_heads_batch[:, None],
-            #             scores=filtered_scores_of_corrupted_heads_batch,
-            #         )
+            # Predict head scores once
+            scores_of_corrupted_heads_batch = model.predict_scores_all_heads(batch[:, 1:3], slice_size=slice_size)
+            scores_of_true_heads_batch = scores_of_corrupted_heads_batch[
+                torch.arange(0, batch.shape[0]),
+                batch[:, 0],
+            ]
+
+            # Create positive filter for all corrupted heads
+            if filtering_necessary or positive_masks_required:
+                assert all_pos_triples is not None
+                assert relation_filter is not None
+                positive_filter_heads, _ = create_sparse_positive_filter_(
+                    hrt_batch=batch,
+                    all_pos_triples=all_pos_triples,
+                    relation_filter=relation_filter,
+                    filter_col=0,
+                )
+
+            # Create a positive mask with the size of the scores from the positive heads filter
+            if positive_masks_required:
+                positive_mask_heads = create_dense_positive_mask_(
+                    zero_tensor=torch.zeros_like(scores_of_corrupted_heads_batch),
+                    filter_batch=positive_filter_heads,
+                )
+            else:
+                positive_mask_heads = None
+
+            # Evaluate metrics on these head scores
+            for evaluator in unfiltered_evaluators:
+                evaluator.process_head_scores_(
+                    hrt_batch=batch,
+                    true_scores=scores_of_true_heads_batch[:, None],
+                    scores=scores_of_corrupted_heads_batch,
+                    dense_positive_mask=positive_mask_heads,
+                )
+
+            # Filter
+            if filtering_necessary:
+                assert all_pos_triples is not None
+                assert relation_filter is not None
+                filtered_scores_of_corrupted_heads_batch = filter_scores_(
+                    scores=scores_of_corrupted_heads_batch,
+                    filter_batch=positive_filter_heads
+                )
+
+                # The scores for the true triples have to be rewritten to the scores tensor
+                scores_of_corrupted_heads_batch[
+                    torch.arange(0, batch.shape[0]),
+                    batch[:, 0],
+                ] = scores_of_true_heads_batch
+
+                # Evaluate metrics on these *filtered* tail scores
+                for filtered_evaluator in filtered_evaluators:
+                    filtered_evaluator.process_head_scores_(
+                        hrt_batch=batch,
+                        true_scores=scores_of_true_heads_batch[:, None],
+                        scores=filtered_scores_of_corrupted_heads_batch,
+                    )
 
             # If we only probe sizes we do not need more than one batch
             if only_size_probing and evaluated_once:
