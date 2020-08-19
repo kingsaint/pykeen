@@ -94,7 +94,7 @@ def create_entity_mapping(triples: LabeledTriples) -> EntityMapping:
     # Split triples
     heads, tails = triples[:, 0], triples[:, 2]
     # Sorting ensures consistent results when the triples are permuted
-    entity_labels = sorted(set(heads).union(tails))
+    entity_labels = ['DUMMY_ENT'] + sorted(set(heads).union(tails))  # Add a DUMMY_ENT at 0-th id
     # Create mapping
     return {
         str(label): i
@@ -129,8 +129,8 @@ def _map_triples_elements_to_ids(
 
     # When triples that don't exist are trying to be mapped, they get the id "-1"
     entity_getter = np.vectorize(entity_to_id.get)
-    head_column = entity_getter(heads, [-1])
-    tail_column = entity_getter(tails, [-1])
+    head_column = entity_getter(heads, [entity_to_id['DUMMY_ENT']])
+    tail_column = entity_getter(tails, [entity_to_id['DUMMY_ENT']])
     relation_getter = np.vectorize(relation_to_id.get)
     relation_column = relation_getter(relations, [-1])
 
@@ -222,7 +222,7 @@ class TriplesFactory:
             self.path = '<None>'
             self.triples = triples
 
-        self._num_entities = len(set(self.triples[:, 0]).union(self.triples[:, 2]))
+        self._num_entities = len(set(self.triples[:, 0]).union(self.triples[:, 2])) + 1 # + 1 For a DUMMY Entity
 
         relations = self.triples[:, 1]
         unique_relations = set(relations)
